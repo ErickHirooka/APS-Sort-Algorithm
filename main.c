@@ -1,30 +1,8 @@
-/*
- * ============================================================================
- *  APS - Atividade Pratica Supervisionada
- *  4o Semestre - Ciencia da Computacao - UNIP 2026/2
- *
- *  Tema: Desenvolvimento de um Sistema para Analise de Performance de
- *        Algoritmos de Ordenacao de Dados
- *
- *  Dados: Focos de incendio detectados por satelite no estado de Sao Paulo
- *         (anos 2023 e 2024) - Fonte: INPE
- *
- *  Algoritmos implementados:
- *    - Bubble Sort (Troca / O(n^2))
- *    - Quick Sort  (Divisao e Conquista / O(n log n))
- *
- *  Compilacao:
- *    gcc main.c -o aps.exe
- * ============================================================================
- */
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <locale.h>
 #include <time.h>
-
-/* ========================== CONSTANTES ========================== */
 
 #define MAX_REGISTROS   10000   /* Capacidade maxima de registros (2024 tem ~8712) */
 #define TAM_ID          20      /* Tamanho do campo id_bdq                         */
@@ -37,12 +15,6 @@
 #define TAM_LINHA       512     /* Tamanho maximo de uma linha do CSV              */
 #define TAM_CAMINHO     300     /* Tamanho maximo do caminho do arquivo            */
 
-/* ========================== ESTRUTURAS ========================== */
-
-/*
- * Estrutura que representa um unico registro (foco de incendio).
- * Cada campo corresponde a uma coluna do CSV fornecido pelo INPE.
- */
 typedef struct {
     char id_bdq[TAM_ID];
     char foco_id[TAM_FOCO_ID];
@@ -55,54 +27,32 @@ typedef struct {
     char bioma[TAM_BIOMA];
 } Foco;
 
-/*
- * Estrutura para armazenar metricas de execucao de um algoritmo de ordenacao.
- */
 typedef struct {
     unsigned long comparacoes;
     unsigned long trocas;
     double tempo_segundos;
 } Metricas;
 
-/*
- * Estrutura generica para contagem de elementos unicos (biomas, municipios).
- */
 typedef struct {
     char nome[TAM_MUNICIPIO];
     int contagem;
 } ItemContagem;
 
-/*
- * Definicao do tipo ponteiro de funcao para algoritmos de ordenacao.
- */
 typedef void (*FuncaoSort)(Foco[], int, int (*)(const Foco*, const Foco*), Metricas*);
 
-/*
- * Estrutura que associa o nome legivel de um algoritmo a sua funcao.
- */
 typedef struct {
     const char *nome;
     FuncaoSort funcao;
 } AlgoritmoInfo;
 
-/* ========================== VARIAVEIS GLOBAIS ========================== */
-
-/* Vetores principais para armazenamento dos dados de cada ano */
 Foco dados2023[MAX_REGISTROS];
 Foco dados2024[MAX_REGISTROS];
 int total2023 = 0;
 int total2024 = 0;
 
-/* Vetor de trabalho auxiliar (copia isolada para nao corromper os originais) */
 Foco vetorTrabalho[MAX_REGISTROS];
 
-/* ========================== FUNCOES AUXILIARES ========================== */
-
-/*
- * Funcao: removerEspacos
- * ----------------------
- * Remove espacos em branco no inicio e no final de uma string.
- */
+/* Funcao: removerEspacos */
 void removerEspacos(char *str) {
     int inicio = 0;
     int fim;
@@ -131,11 +81,7 @@ void removerEspacos(char *str) {
     str[j] = '\0';
 }
 
-/*
- * Funcao: lerCampoCSV
- * --------------------
- * Extrai um campo delimitado por virgula preservando campos vazios.
- */
+/* Funcao: lerCampoCSV */
 void lerCampoCSV(const char *linha, int *pos, char *campo, int tamMax) {
     int i = 0;
     int p = *pos;
@@ -155,11 +101,6 @@ void lerCampoCSV(const char *linha, int *pos, char *campo, int tamMax) {
 
 /* ========================== LEITURA DO CSV ========================== */
 
-/*
- * Funcao: carregarCSV
- * --------------------
- * Le arquivo CSV e preenche o vetor de registros correspondente.
- */
 int carregarCSV(const char *nomeArquivo, Foco vetor[], int *total) {
     FILE *arquivo;
     char linha[TAM_LINHA];
@@ -177,8 +118,7 @@ int carregarCSV(const char *nomeArquivo, Foco vetor[], int *total) {
 
     while (fgets(linha, TAM_LINHA, arquivo) != NULL) {
         contadorLinhas++;
-
-        /* Pula linha de cabecalho */
+        
         if (contadorLinhas == 1) {
             continue;
         }
@@ -214,7 +154,6 @@ int carregarCSV(const char *nomeArquivo, Foco vetor[], int *total) {
 
 /* ========================== FUNCOES DE EXTRACAO E COMPARACAO ========================== */
 
-/* Funcoes extratoras para a contagem de unicos */
 const char* obterBioma(const Foco *f) {
     return f->bioma;
 }
@@ -236,10 +175,6 @@ int compararPorMunicipio(const Foco *a, const Foco *b) {
     return strcmp(a->municipio, b->municipio);
 }
 
-/*
- * Funcao generica para contagem de frequencia de valores unicos.
- * Elimina a duplicacao de logica em relatorios de bioma, municipios e anos.
- */
 int contarFrequencias(const Foco vetor[], int total,
                       const char* (*obterCampo)(const Foco*),
                       ItemContagem itens[], int maxItens) {
@@ -297,7 +232,7 @@ void bubbleSort(Foco vetor[], int n,
             }
         }
         if (!trocou) {
-            break; /* Otimizacao de melhor caso O(n) */
+            break;
         }
     }
 }
@@ -348,17 +283,12 @@ void quickSort(Foco vetor[], int n,
     }
 }
 
-/* Tabela centralizada de algoritmos cadastrados no sistema */
 static const AlgoritmoInfo ALGORITMOS[] = {
     {"Bubble Sort", bubbleSort},
     {"Quick Sort",  quickSort}
 };
 #define TOTAL_ALGORITMOS 2
 
-/*
- * Funcao generica que executa, cronometra e mede um algoritmo de ordenacao.
- * Reutilizada na ordenacao individual e no comparativo, eliminando codigo duplicado.
- */
 void testarAlgoritmo(FuncaoSort funcao, const Foco fonte[], int total,
                      int (*comparar)(const Foco*, const Foco*),
                      Metricas *met) {
@@ -458,9 +388,6 @@ void exibirMetricas(const char *nomeAlgoritmo, const char *criterio,
     printf("  ====================================================\n");
 }
 
-/*
- * Relatorio comparativo: itera sobre o array de algoritmos sem repeticao de blocos.
- */
 void gerarRelatorioComparativo(Foco fonte[], int total,
                                int (*comparar)(const Foco*, const Foco*),
                                const char *criterio) {
@@ -662,7 +589,7 @@ void compararAnos(void) {
     printf("\n");
 }
 
-/* ========================== MENUS E FLUXO ========================== */
+/* ========================== MENUS ========================== */
 
 void exibirMenuPrincipal(void) {
     printf("\n");
@@ -741,9 +668,6 @@ int menuEscolherCriterio(int (**comparar)(const Foco*, const Foco*), char *crite
     return 1;
 }
 
-/*
- * Menu reduzido para 2 algoritmos: Bubble Sort e Quick Sort.
- */
 int menuEscolherAlgoritmo(void) {
     int opcao;
 
@@ -754,7 +678,7 @@ int menuEscolherAlgoritmo(void) {
     scanf("%d", &opcao);
 
     if (opcao >= 1 && opcao <= TOTAL_ALGORITMOS) {
-        return opcao - 1; /* Retorna o indice no array ALGORITMOS */
+        return opcao - 1;
     }
 
     printf("  Opcao invalida!\n");
@@ -813,7 +737,6 @@ int main(void) {
     printf("  |                                                  |\n");
     printf("  ====================================================\n");
 
-    /* --- Carregamento dos dados --- */
     printf("\n  Carregando dados...\n\n");
 
     printf("  Informe o caminho do arquivo CSV de 2023\n");
@@ -852,7 +775,6 @@ int main(void) {
     printf("\n  %d arquivo(s) carregado(s) com sucesso!\n", dadosCarregados);
     printf("  Total de registros: 2023 = %d | 2024 = %d\n", total2023, total2024);
 
-    /* --- Loop do menu --- */
     do {
         exibirMenuPrincipal();
         scanf("%d", &opcao);
